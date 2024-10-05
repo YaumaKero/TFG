@@ -94,27 +94,18 @@ for y in ys:
     RangingError_por_y[y] = RangingError_por_BS
 
 ### --------------------------- Estudio Outliers -----------------------#####
-# Filtro para las muestras del Pixel 4a a 5 metros y ángulo 8
 filtro = (df['sampleNumber'] >= 0) & (df['sampleNumber'] <= 199) & (df['y'] == 5) & (df['angle'] == 8)
 df_filtrado = df[filtro].copy()
-# Reemplazamos los valores de -100 por NaN
 df_filtrado[mac_deseada].replace(-100, np.nan, inplace=True)
-# Nos quedamos con la primera muestra de cada sampleNumber
 df_filtrado = df_filtrado.drop_duplicates(subset='sampleNumber', keep='first')
-# Ordenamos por sampleNumber
 df_filtrado = df_filtrado.sort_values(by='sampleNumber')
-# Gráfico de barras con los ajustes de los ejes
 df_filtrado.set_index('sampleNumber')[mac_deseada].plot(kind='bar')
-# Configuración del título y ejes
 plt.title(f'Muestras cronologicas - {nombre_telefono} - {band_name}')
 plt.xlabel('Numero de muestra')
 plt.ylabel('Distancia medida [m]')
-# Ajustar el rango de los ejes
 plt.xlim(1, 200)
 plt.ylim(0, 3800)
-# Personalizar las marcas en el eje X para que solo aparezcan 50, 100, 150 y 200
 plt.xticks(ticks=[49, 99, 149, 199], labels=['50', '100', '150', '200'])
-# Guardar el gráfico y mostrarlo
 plt.savefig(f'C:/Users/jaume/Documents/VISUAL CODES/TFG/plots/{nombre_telefono}_{band_name}_MuestrasOrdenadasOutliers.png')
 plt.show()
 
@@ -133,20 +124,6 @@ plt.savefig(f'C:/Users/jaume/Documents/VISUAL CODES/TFG/plots/{nombre_telefono}_
 plt.show()
 
 
-### --------------------------- Estudio muestras ordenadas por samplenumber -----------------------#####
-#creamos un grafico con las muestras ordenadas por samplenumber a 5 metros
-filtro = (df['sampleNumber'] >= 0) & (df['sampleNumber'] <= 199) & (df['y'] == 5)
-df_filtrado = df[filtro].copy()
-df_filtrado[mac_deseada].replace(-100, np.nan, inplace=True)
-#df_filtrado = df_filtrado[np.abs(df_filtrado[mac_deseada] - df_filtrado[mac_deseada].mean()) <= (2 * df_filtrado[mac_deseada].std())]
-df_filtrado = df_filtrado.sort_values(by='sampleNumber')
-df_filtrado[mac_deseada].plot()
-plt.title(f'Muestras ordenadas por samplenumber - {nombre_telefono} - {band_name}')
-plt.xlabel('Muestra')
-plt.ylabel('Distancia medida [m]')
-plt.savefig(f'C:/Users/jaume/Documents/VISUAL CODES/TFG/plots/{nombre_telefono}_{band_name}_MuestrasOrdenadas.png')
-plt.show()
-
 ##### --------------------------- MUESTRAS VALIDAS -----------------------#####
 muestras_validas = {}
 for y in ys:
@@ -160,23 +137,18 @@ for y in ys:
             filtro_BS = (df_filtrado[mac + '#2_samples_averaged'] == BS)    
         df_filtrado = df_filtrado[filtro_BS]
         num_muestras_validas = df_filtrado[mac_deseada].count()
-        # Aplicar divisiones según el número de muestras
         if num_muestras_validas > 200:
             num_muestras_validas /= 2
         if num_muestras_validas > 400:
             num_muestras_validas /= 4
         num_muestras_validas = round(num_muestras_validas)
         num_muestras_validas = (num_muestras_validas / 200) * 100
-        # Acumular el total para cada BS
         if BS not in muestras_validas:
             muestras_validas[BS] = []
         muestras_validas[BS].append(num_muestras_validas)
-# Calcular la media de porcentajes de muestras válidas para cada BS
 media_muestras_validas = {BS: np.mean(muestras) for BS, muestras in muestras_validas.items()}
-# Convertir el diccionario a un DataFrame
 df_muestras_validas_media = pd.DataFrame(list(media_muestras_validas.items()), columns=['BS', 'Media Porcentaje Muestras Válidas'])
 df_muestras_validas_media.set_index('BS', inplace=True)
-# Mostrar el DataFrame final
 print(f'\nMedia del porcentaje de muestras que alcanzan el BS pedido - {nombre_telefono} - {band_name}')
 print(df_muestras_validas_media)
 
@@ -287,40 +259,27 @@ plt.ylabel('RMSE')
 plt.legend(loc='upper right', title='BS')
 plt.savefig(f'C:/Users/jaume/Documents/VISUAL CODES/TFG/plots/{nombre_telefono}_{band_name}_RMSE_Distancia.png')
 plt.show()
-# Número de columnas en df_rmse
 num_columns = len(df_rmse.columns)
-# Dividimos en dos grupos: primeras 14 columnas y las restantes
 columns_first_half = df_rmse.columns[:14]
 columns_second_half = df_rmse.columns[14:]
 
 # Función para crear un gráfico de regresión lineal combinando todas las columnas
 def plot_all_regressions(df_rmse, nombre_telefono, band_name):
-    plt.figure(figsize=(14, 8))  # Ajustar el tamaño de la figura si es necesario
-    markers = ['.', '^', 's']  # Marcadores para diferenciar grupos de columnas
-    linestyles = ['-', 'dotted', '--']  # Diferentes estilos de línea
-
-    # Contador para alternar entre marcadores y estilos
+    plt.figure(figsize=(14, 8))  
+    markers = ['.', '^', 's'] 
+    linestyles = ['-', 'dotted', '--']  
     marker_counter = 0
     linestyle_counter = 0
-
-    # Iterar sobre cada columna del DataFrame
     for i, column in enumerate(df_rmse.columns):
-        # Cambiar marcador y estilo cada 10 columnas para diferenciación visual
         if i % 10 == 0 and i != 0:
             marker_counter = (marker_counter + 1) % len(markers)
             linestyle_counter = (linestyle_counter + 1) % len(linestyles)
-
-        # Preparar los datos para la regresión lineal
         regression_model = LinearRegression()
         df_rmse_cleaned = df_rmse.dropna(subset=[column])
         X = df_rmse_cleaned.index.values.reshape(-1, 1)
         y = df_rmse_cleaned[column].values
-
-        # Ajustar la regresión lineal
         regression_model.fit(X, y)
         y_pred = regression_model.predict(X)
-
-        # Trazar la regresión lineal
         plt.plot(
             X, 
             y_pred, 
@@ -329,33 +288,22 @@ def plot_all_regressions(df_rmse, nombre_telefono, band_name):
             label=f'BS {column}', 
             linewidth=2
         )
-
-    # Configurar el título y las etiquetas
     plt.title(f'Regresiones Lineales del RMSE(Y) - {nombre_telefono} - {band_name}')
     plt.xlabel('Distancia [m]')
     plt.ylabel('RMSE')
     plt.grid(True)
-
-    # Establecer los límites del eje Y para centrar las líneas de regresión
-    plt.ylim(-1, 4)  # Ajustar el rango de Y según las necesidades
-
-    # Ajustar la leyenda dentro de los márgenes de la figura
+    #plt.ylim(-1, 4)  # Ajustar el rango de Y según las necesidades
     plt.legend(
         loc='upper right', 
         title='BS', 
-        bbox_to_anchor=(1.05, 1),  # Ajustar la posición de la leyenda
-        borderaxespad=0.001,  # Ajustar el espacio entre la leyenda y el gráfico
-        fontsize='small'  # Reducir el tamaño de la fuente si es necesario
+        bbox_to_anchor=(1.05, 1),  
+        borderaxespad=0.001,  
+        fontsize='small'  
     )
-
-    # Ajustar los márgenes de la gráfica para dar más espacio a la leyenda
     plt.subplots_adjust(right=0.8)
-
-    # Guardar la gráfica
     plt.savefig(f'C:/Users/jaume/Documents/VISUAL CODES/TFG/plots/{nombre_telefono}_{band_name}_RegresionesRMSE_Completo.png', bbox_inches='tight')
     plt.show()
 
-# Llamar a la función para crear la gráfica combinada
 plot_all_regressions(df_rmse, nombre_telefono, band_name)
 
 

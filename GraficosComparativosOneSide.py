@@ -5,11 +5,8 @@ import matplotlib.pyplot as plt
 
 
 #####------------------------CREAR DATAFRAMES DE CADA TELEFONO-MAC------------------------#####
-
-# Definición de los teléfonos y sus archivos asociados
 telefonos = ["Pixel 6 Pro", "Pixel 3a", "Pixel 4a", "M2007J3SY"]
 nombres_telefonos = [t.replace(" ", "") for t in telefonos]
-# Definición de las MACs (que son los nombres de las columnas)
 macs = [
     'c4:41:1e:fa:07:db#2_value',  # L5DFS
     'c4:41:1e:fa:07:da#2_value',  # L5indoor
@@ -17,7 +14,6 @@ macs = [
     'cc:f4:11:47:ef:eb#2_value',  # G2_4
     'cc:f4:11:47:ef:e7#2_value'   # G5
 ]
-# Correspondencia MAC a Banda
 mac_to_band = {
     'c4:41:1e:fa:07:db#2_value': 'L5DFS',
     'c4:41:1e:fa:07:da#2_value': 'L5indoor',
@@ -25,18 +21,12 @@ mac_to_band = {
     'cc:f4:11:47:ef:eb#2_value': 'G2.4',
     'cc:f4:11:47:ef:e7#2_value': 'G5'
 }
-# Diccionario para almacenar los DataFrames
 dataframes = {}
-# Crear DataFrames para cada combinación de teléfono y MAC
 for nombre_telefono in nombres_telefonos:
-    # Cargar el CSV correspondiente al teléfono
     df = pd.read_csv(f'C:/Users/jaume/Documents/VISUAL CODES/TFG/muestras3/muestras3_{nombre_telefono}.csv')
-    # Crear un DataFrame para cada MAC, extrayendo las columnas relevantes
     for mac_deseada in macs:
-        # Extraer las columnas relevantes (y, model, angle, sampleNumber y columnas relacionadas con la MAC deseada)
         columnas_interes = ['y', 'model', 'angle', 'sampleNumber', mac_deseada, mac_deseada.replace('_value', '_error'), mac_deseada.replace('_value', '_samples_averaged')]
         df_filtrado = df[columnas_interes]
-        # Guardar el DataFrame con un nombre adecuado
         band_name = mac_to_band[mac_deseada]
         dataframe_name = f"{nombre_telefono}_{band_name}"
         dataframes[dataframe_name] = df_filtrado
@@ -142,7 +132,7 @@ df_BSlogrado.to_csv('C:/Users/jaume/Documents/VISUAL CODES/TFG/BSlogrado.csv')
 rmse_resultados_L2_4 = {telefono: {} for telefono in nombres_telefonos}
 # Iterar sobre cada combinación de teléfono para la banda L2.4
 for nombre_telefono in nombres_telefonos:
-    mac_deseada = 'c4:41:1e:fa:07:d9#2_value'  # MAC para L2.4 en One-Sided
+    mac_deseada = 'c4:41:1e:fa:07:d9#2_value'  
     band_name = 'L2.4'
     dataframe_name = f"{nombre_telefono}_{band_name}"
     # Obtener el DataFrame correspondiente
@@ -178,7 +168,7 @@ for nombre_telefono in nombres_telefonos:
         list(rmse_data.values()), 
         marker='o', 
         label=f'L2.4', 
-        color='green'  # Asignar un color verde para L2.4
+        color='green' 
     )
     plt.title(f'RMSE - {nombre_telefono}')
     plt.xlabel('Burst Size')
@@ -197,18 +187,17 @@ exclusiones = ['Pixel6Pro_L2.4', 'Pixel6Pro_G2.4', 'Pixel6Pro_L5indoor', 'M2007J
 colores_bandas = {
     'L5DFS': '#1f77b4',      # Azul
     'L5indoor': '#ff7f0e',   # Naranja
-    'L2.4': '#2ca02c',       # Verde (no se mostrará)
+    'L2.4': '#2ca02c',       # Verde 
     'G2.4': '#d62728',       # Rojo
     'G5': '#9467bd'          # Púrpura
 }
 # Iterar sobre cada combinación de teléfono y banda (MAC)
 for nombre_telefono in nombres_telefonos:
     for mac_deseada in macs:
-        # Nombre de la banda y DataFrame correspondiente
         band_name = mac_to_band[mac_deseada]
         dataframe_name = f"{nombre_telefono}_{band_name}"
         # Excluir combinaciones no deseadas y la banda L2.4
-        if dataframe_name in exclusiones or band_name != 'L2.4':
+        if dataframe_name in exclusiones or band_name == 'L2.4':
             continue
         # Obtener el DataFrame correspondiente
         df = dataframes[dataframe_name]    
@@ -259,7 +248,7 @@ df_ranging_error.to_csv('C:/Users/jaume/Documents/VISUAL CODES/TFG/RangingError.
 for nombre_telefono in nombres_telefonos:
     plt.figure(figsize=(12, 8))
     for band_name, color in colores_bandas.items():
-        if band_name in ranging_error_resultados[nombre_telefono] and band_name == 'L2.4':
+        if band_name in ranging_error_resultados[nombre_telefono] and band_name != 'L2.4':
             ranging_data = ranging_error_resultados[nombre_telefono][band_name]
             plt.plot(
                 list(ranging_data.keys()), 
@@ -278,49 +267,49 @@ for nombre_telefono in nombres_telefonos:
     plt.show()
 
 #####------------------------ANALISIS DE PDF RANGING ERROR (SEPARADO PARA L2.4) ------------------------#####
-# Colores específicos para cada banda
-colores_bandas = {
-    'L5DFS': '#1f77b4',      # Azul
-    'L5indoor': '#ff7f0e',   # Naranja
-    'L2.4': '#2ca02c',       # Verde
-    'G2.4': '#d62728',       # Rojo
-    'G5': '#9467bd'          # Púrpura
-}
-# Crear histogramas de Ranging Error para todas las bandas disponibles para cada terminal
-for nombre_telefono in nombres_telefonos:
-    # Generar una gráfica por banda para cada teléfono
-    for mac_deseada, band_name in mac_to_band.items():
-        dataframe_name = f"{nombre_telefono}_{band_name}"        
-        # Verificar si el DataFrame existe (si el teléfono soporta esta banda)
-        if dataframe_name in dataframes:
-            df = dataframes[dataframe_name]          
-            # Filtrar solo las filas correspondientes a la distancia 5m y BS 8
-            df_filtrado = df[(df['y'] == 5) & (df['angle'] == 8)].copy()
-            # Reemplazar valores de -100 por NaN
-            df_filtrado[mac_deseada].replace(-100, np.nan, inplace=True)           
-            # Filtrado para eliminar outliers fuera de ±3 sigma
-            df_filtrado = df_filtrado[np.abs(df_filtrado[mac_deseada] - df_filtrado[mac_deseada].mean()) <= (2 * df_filtrado[mac_deseada].std())]            
-            # Calcular el *Ranging Error* para cada muestra
-            mediana = df_filtrado[mac_deseada].median()
-            df_filtrado['ranging_error'] = df_filtrado[mac_deseada] - mediana            
-            # Crear el histograma de errores de ranging
-            ranging_error_data = df_filtrado['ranging_error'].dropna().tolist()
-            print(df_filtrado['ranging_error'])
-            # Si hay datos, graficar el histograma
-            if len(ranging_error_data) > 0:
-                plt.figure(figsize=(10, 6))
-                plt.hist(ranging_error_data, bins=15, alpha=0.75, label=f'{band_name}', color=colores_bandas.get(band_name, 'gray'))
-                #guardamos el histograma en un archivo png
-                plt.savefig(f'C:/Users/jaume/Documents/VISUAL CODES/TFG/plots/Histograma_{nombre_telefono}_{band_name}.png')
+# # Colores específicos para cada banda
+# colores_bandas = {
+#     'L5DFS': '#1f77b4',      # Azul
+#     'L5indoor': '#ff7f0e',   # Naranja
+#     'L2.4': '#2ca02c',       # Verde
+#     'G2.4': '#d62728',       # Rojo
+#     'G5': '#9467bd'          # Púrpura
+# }
+# # Crear histogramas de Ranging Error para todas las bandas disponibles para cada terminal
+# for nombre_telefono in nombres_telefonos:
+#     # Generar una gráfica por banda para cada teléfono
+#     for mac_deseada, band_name in mac_to_band.items():
+#         dataframe_name = f"{nombre_telefono}_{band_name}"        
+#         # Verificar si el DataFrame existe (si el teléfono soporta esta banda)
+#         if dataframe_name in dataframes:
+#             df = dataframes[dataframe_name]          
+#             # Filtrar solo las filas correspondientes a la distancia 5m y BS 8
+#             df_filtrado = df[(df['y'] == 5) & (df['angle'] == 8)].copy()
+#             # Reemplazar valores de -100 por NaN
+#             df_filtrado[mac_deseada].replace(-100, np.nan, inplace=True)           
+#             # Filtrado para eliminar outliers fuera de ±3 sigma
+#             df_filtrado = df_filtrado[np.abs(df_filtrado[mac_deseada] - df_filtrado[mac_deseada].mean()) <= (2 * df_filtrado[mac_deseada].std())]            
+#             # Calcular el *Ranging Error* para cada muestra
+#             mediana = df_filtrado[mac_deseada].median()
+#             df_filtrado['ranging_error'] = df_filtrado[mac_deseada] - mediana            
+#             # Crear el histograma de errores de ranging
+#             ranging_error_data = df_filtrado['ranging_error'].dropna().tolist()
+#             print(df_filtrado['ranging_error'])
+#             # Si hay datos, graficar el histograma
+#             if len(ranging_error_data) > 0:
+#                 plt.figure(figsize=(10, 6))
+#                 plt.hist(ranging_error_data, bins=15, alpha=0.75, label=f'{band_name}', color=colores_bandas.get(band_name, 'gray'))
+#                 #guardamos el histograma en un archivo png
+#                 plt.savefig(f'C:/Users/jaume/Documents/VISUAL CODES/TFG/plots/Histograma_{nombre_telefono}_{band_name}.png')
                                 
-                # Añadir detalles a la gráfica
-                plt.title(f'Histograma del Ranging Error - {nombre_telefono} (BS 8) - {band_name}')
-                plt.xlabel('Ranging Error (m)')
-                plt.ylabel('Frecuencia')
-                plt.grid(True)
-                plt.axvline(x=0, color='k', linewidth=1.5, linestyle='--')  # Línea vertical en x=0 para referencia
-                plt.legend(title='Banda')
-                plt.show()
+#                 # Añadir detalles a la gráfica
+#                 plt.title(f'Histograma del Ranging Error - {nombre_telefono} (BS 8) - {band_name}')
+#                 plt.xlabel('Ranging Error (m)')
+#                 plt.ylabel('Frecuencia')
+#                 plt.grid(True)
+#                 plt.axvline(x=0, color='k', linewidth=1.5, linestyle='--')  # Línea vertical en x=0 para referencia
+#                 plt.legend(title='Banda')
+#                 plt.show()
 
 
 #####------------------------ANALISIS DE LA DESVIACION ESTANDAR ------------------------#####
